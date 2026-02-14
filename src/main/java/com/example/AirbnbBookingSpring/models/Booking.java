@@ -1,21 +1,16 @@
 package com.example.AirbnbBookingSpring.models;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
-@Builder
-@AllArgsConstructor
+@Table(name = "booking")
+@Getter
+@Setter
 @NoArgsConstructor
-@Data
-public class Booking {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@AllArgsConstructor
+@Builder
+public class Booking extends BaseModel{
 
     @Column(nullable = false)
     private String userId;
@@ -25,7 +20,7 @@ public class Booking {
 
     @Column(nullable = false)
     private String totalPrice;
-    
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default

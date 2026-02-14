@@ -1,20 +1,16 @@
 package com.example.AirbnbBookingSpring.models;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
-@Builder
-@AllArgsConstructor
+@Table(name = "availability")
+@Getter
+@Setter
 @NoArgsConstructor
-@Data
-public class Availability {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@AllArgsConstructor
+@Builder
+public class Availability extends BaseModel {
 
     @Column(nullable = false)
     private String airbnbId;
