@@ -14,6 +14,16 @@ public class Airbnb extends BaseModel{
     private String name;
     private String description;
     @Column(nullable = false)
-    private String pricePerNight;
+    private Long pricePerNight;
     private String location;
 }
+
+
+
+
+
+
+
+
+
+
