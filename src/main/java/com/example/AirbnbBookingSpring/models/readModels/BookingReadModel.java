@@ -1,7 +1,13 @@
 package com.example.AirbnbBookingSpring.models.readModels;
 
-public class BookingReadModel {
+import lombok.*;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class BookingReadModel {
     private Long id;
     private Long airbnbId;
     private Long userId;
@@ -11,21 +17,3 @@ public class BookingReadModel {
     private String checkInDate;
     private String checkOutDate;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
