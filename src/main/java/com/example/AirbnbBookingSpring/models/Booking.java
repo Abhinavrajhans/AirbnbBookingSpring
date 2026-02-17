@@ -2,6 +2,8 @@ package com.example.AirbnbBookingSpring.models;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Entity
 @Table(name = "bookings")
 @Getter
@@ -22,7 +24,7 @@ public class Booking extends BaseModel {
     private Airbnb airbnb;
 
     @Column(nullable = false)
-    private Long totalPrice; // Changed from String to Long
+    private double totalPrice;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -33,8 +35,8 @@ public class Booking extends BaseModel {
     private String idempotencyKey;
 
     @Column(nullable = false)
-    private String checkInDate;
+    private LocalDate checkInDate;
 
     @Column(nullable = false)
-    private String checkOutDate;
+    private LocalDate checkOutDate;
 }

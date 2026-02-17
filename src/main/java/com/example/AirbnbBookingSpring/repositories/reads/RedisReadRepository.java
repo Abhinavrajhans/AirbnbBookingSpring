@@ -1,5 +1,6 @@
 package com.example.AirbnbBookingSpring.repositories.reads;
 
+import com.example.AirbnbBookingSpring.models.Booking;
 import com.example.AirbnbBookingSpring.models.readModels.AirbnbReadModel;
 import com.example.AirbnbBookingSpring.models.readModels.AvailabilityReadModel;
 import com.example.AirbnbBookingSpring.models.readModels.BookingReadModel;
@@ -19,9 +20,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RedisReadRepository {
 
-    private static final String AIRBNB_KEY_PREFIX = "airbnb:";
-    private static final String BOOKING_KEY_PREFIX = "booking:";
-    private static final String AVAIABLE_KEY_PREFIX = "avaiable:";
+    public static final String AIRBNB_KEY_PREFIX = "airbnb:";
+    public static final String BOOKING_KEY_PREFIX = "booking:";
+    public static final String AVAIABLE_KEY_PREFIX = "avaiable:";
 
     private final RedisTemplate<String,String> redisTemplate;
     private final ObjectMapper objectMapper;
@@ -88,6 +89,30 @@ public class RedisReadRepository {
         catch(JacksonException e){
             throw new RuntimeException("Failed to parse AirbnbReadModel read model from Redis",e);
         }
+    }
+
+    public BookingReadModel findBookingByIdempotencyKey(String idempotencyKey){
+        Set<String>  keys=redisTemplate.keys(BOOKING_KEY_PREFIX+"*");
+        if(keys.isEmpty())return null;
+        return keys.stream()
+                .map(key->{
+                    String value=redisTemplate.opsForValue().get(key);
+                    if(value!=null){
+                        try {
+                            BookingReadModel bookingReadModel = objectMapper.readValue(value, BookingReadModel.class);
+                            if (idempotencyKey.equals(bookingReadModel.getIdempotencyKey())) {
+                                return bookingReadModel;
+                            }
+                        }
+                        catch (JacksonException e) {
+                            throw new RuntimeException("Failed to parse AirbnbReadModel read model from Redis",e);
+                        }
+                    }
+                    return null;
+                })
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
     }
 }
 

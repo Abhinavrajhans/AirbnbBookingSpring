@@ -6,6 +6,6 @@ import java.time.LocalDate;
 
 public interface ConcurrencyControlStrategy {
 
-    public void releaseLock(long airbnbId, LocalDate checkInDate, LocalDate checkOutDate);
-    public List<Availability> lockAndCheckAvailability(long airbnbId, LocalDate checkInDate, LocalDate checkOutDate);
+    public void releaseLock(Long airbnbId, LocalDate checkInDate, LocalDate checkOutDate);
+    public List<Availability> lockAndCheckAvailability(Long airbnbId, LocalDate checkInDate, LocalDate checkOutDate,Long userId);
 }

@@ -2,6 +2,8 @@ package com.example.AirbnbBookingSpring.models;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Entity
 @Table(name = "availabilities")
 @Getter
@@ -17,7 +19,7 @@ public class Availability extends BaseModel {
     private Airbnb airbnb;
 
     @Column(nullable = false)
-    private String date;
+    private LocalDate date;
 
     // Many availability slots can reference one booking (when booked)
     @ManyToOne(fetch = FetchType.LAZY)
