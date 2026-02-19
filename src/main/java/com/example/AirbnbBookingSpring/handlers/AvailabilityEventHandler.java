@@ -26,7 +26,7 @@ public class AvailabilityEventHandler {
             LocalDate checkInDate=LocalDate.parse(payload.get("checkInDate").toString());
             LocalDate checkOutDate=LocalDate.parse(payload.get("checkOutDate").toString());
 
-            Long count=availabilityWriteRepository.countByAirbnbIdAndDateBetweenAndBookingIsNotNull(bookingId,checkInDate,checkOutDate);
+            Long count=availabilityWriteRepository.countByAirbnbIdAndDateBetweenAndBookingIsNotNull(airbnbId,checkInDate,checkOutDate);
             if(count>0){
                 sagaEventPublisher.publishEvent("BOOKING_CANCEL_REQUESTED","CANCEL_BOOKING",payload);
                 throw new RuntimeException("Airbnb is not available for the given dates. Please try again with different dates");

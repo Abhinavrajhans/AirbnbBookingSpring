@@ -22,7 +22,7 @@ public class SagaEventProcessor {
             case "BOOKING_CONFIRM_REQUESTED":
                 bookingEventHandler.handleBookingConfirmRequested(sagaEvent);
                 break;
-            case "BOOKING_COMFIRMED":
+            case "BOOKING_CONFIRMED":
                 availabilityEventHandler.handleBookingConfirmed(sagaEvent);
                 log.info("Booking comfired for booking id: {}",sagaEvent.getPayload().get("bookingId"));
                 break;
