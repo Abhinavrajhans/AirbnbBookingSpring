@@ -8,6 +8,7 @@ import com.example.AirbnbBookingSpring.repositories.writes.AirbnbWriteRepository
 import com.example.AirbnbBookingSpring.repositories.writes.AvailabilityWriteRepository;
 import com.example.AirbnbBookingSpring.repositories.writes.BookingWriteRepository;
 import com.example.AirbnbBookingSpring.repositories.writes.UserWriteRepository;
+import com.example.AirbnbBookingSpring.saga.SagaEventPublisher;
 import com.example.AirbnbBookingSpring.services.concurrency.ConcurrencyControlStrategy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -31,6 +33,8 @@ public class BookingService implements IBookingService {
     private final ConcurrencyControlStrategy concurrencyControlStrategy;
     private final UserWriteRepository userWriteRepository;
     private final RedisWriteRepository redisWriteRepository;
+    private final IIdempotencyService idempotencyService;
+    private final SagaEventPublisher  sagaEventPublisher;
 
     // FIX: Added idempotency check + totalPrice on booking + lock release in finally
     @Override
@@ -96,41 +100,34 @@ public class BookingService implements IBookingService {
     @Override
     @Transactional
     public Booking updateBooking(UpdateBookingRequest updateBookingRequest) {
-        // Idempotency: if we've already processed this key, return the existing booking
-        Optional<Booking> existingByKey = bookingWriteRepository
-                .findByIdempotencyKey(updateBookingRequest.getIdempotencyKey());
-        if (existingByKey.isPresent()) {
-            log.info("Idempotent update — returning existing booking for key: {}",
-                    updateBookingRequest.getIdempotencyKey());
-            return existingByKey.get();
+        Booking booking = idempotencyService.findBookingByIdempotencyKey(
+                updateBookingRequest.getIdempotencyKey()
+                )
+                .orElseThrow(()-> new RuntimeException("Booking not found"));
+
+        if(booking.getStatus() != BookingStatus.PENDING) {
+            throw new RuntimeException("Booking status is not PENDING");
         }
 
-        Booking booking = bookingWriteRepository
-                .findByIdWithLock(updateBookingRequest.getId())
-                .orElseThrow(() -> new RuntimeException("Booking not found with id: " + updateBookingRequest.getId()));
-
-        BookingStatus newStatus = updateBookingRequest.getBookingStatus();
-
-        // Business rule: cannot revert a CANCELLED booking
-        if (booking.getStatus() == BookingStatus.CANCELLED) {
-            throw new RuntimeException("Cannot update a cancelled booking");
+        if(updateBookingRequest.getBookingStatus()==BookingStatus.CONFIRMED){ // TODO : This also violates a solid principle please resolve it.
+            sagaEventPublisher.publishEvent("BOOKING_CONFIRM_REQUESTED","CONFIRM_BOOKING",
+                    Map.of("bookingId", booking.getId(),
+                            "airbnbId",booking.getAirbnb().getId(),
+                            "checkInDate",booking.getCheckInDate().toString(),
+                            "checkOutDate",booking.getCheckOutDate().toString()
+                            ));
+        }
+        else if(updateBookingRequest.getBookingStatus()==BookingStatus.CANCELLED) {
+            sagaEventPublisher.publishEvent("BOOKING_CANCEL_REQUESTED","CANCEL_BOOKING",
+                    Map.of("bookingId", booking.getId(),
+                            "airbnbId",booking.getAirbnb().getId(),
+                            "checkInDate",booking.getCheckInDate().toString(),
+                            "checkOutDate",booking.getCheckOutDate().toString()
+                    ));
         }
 
-        // If cancelling, release availability slots
-        if (newStatus == BookingStatus.CANCELLED) {
-            List<Availability> slots = availabilityWriteRepository.findByBooking(booking);
-            slots.forEach(slot -> {
-                slot.setIsAvailable(true);
-                slot.setBooking(null);
-            });
-            availabilityWriteRepository.saveAll(slots);
-        }
-
-        booking.setStatus(newStatus);
-        booking.setIdempotencyKey(updateBookingRequest.getIdempotencyKey());
-        booking = bookingWriteRepository.save(booking);
-
-        redisWriteRepository.writeBookingReadModel(booking);
         return booking;
+
+
     }
 }

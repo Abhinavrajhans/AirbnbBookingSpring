@@ -19,11 +19,7 @@ public class IdempotencyService implements IIdempotencyService {
 
     @Override
     public boolean isIdempotencyKeyUsed(String idempotencyKey) {
-        // Check Redis first (fast path)
-        BookingReadModel redisResult = redisReadRepository.findBookingByIdempotencyKey(idempotencyKey);
-        if (redisResult != null) return true;
-        // Fallback to DB
-        return bookingWriteRepository.findByIdempotencyKey(idempotencyKey).isPresent();
+        return this.findBookingByIdempotencyKey(idempotencyKey).isPresent();
     }
 
     // FIX: was building a Booking object but never returning it
