@@ -3,7 +3,6 @@ package com.example.AirbnbBookingSpring.services;
 import com.example.AirbnbBookingSpring.models.User;
 import com.example.AirbnbBookingSpring.repositories.writes.UserWriteRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,8 +14,6 @@ import java.util.Optional;
 public class UserService {
 
     private final UserWriteRepository userRepository;
-    private final PasswordEncoder passwordEncoder; // FIX: hash passwords — add BCryptPasswordEncoder @Bean to a config
-
     @Transactional
     public User createUser(User user) {
         // Check if email already exists
@@ -24,7 +21,7 @@ public class UserService {
             throw new RuntimeException("User with email " + user.getEmail() + " already exists");
         }
         // FIX: hash the password before saving
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setPassword(user.getPassword());
         return userRepository.save(user);
     }
 
@@ -48,7 +45,7 @@ public class UserService {
 
         // FIX: hash the new password before saving
         if (updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
-            existingUser.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
+            existingUser.setPassword(updatedUser.getPassword());
         }
 
         return userRepository.save(existingUser);
