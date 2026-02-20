@@ -100,11 +100,13 @@ public class BookingService implements IBookingService {
     @Override
     @Transactional
     public Booking updateBooking(UpdateBookingRequest updateBookingRequest) {
+        log.info("Updating Booking for idempotency key {}",updateBookingRequest.getIdempotencyKey());
         Booking booking = idempotencyService.findBookingByIdempotencyKey(
                 updateBookingRequest.getIdempotencyKey()
                 )
                 .orElseThrow(()-> new RuntimeException("Booking not found"));
-
+        log.info("booking found for idempotency key {}",updateBookingRequest.getIdempotencyKey());
+        log.info("booking status {}:",booking.getStatus());
         if(booking.getStatus() != BookingStatus.PENDING) {
             throw new RuntimeException("Booking status is not PENDING");
         }

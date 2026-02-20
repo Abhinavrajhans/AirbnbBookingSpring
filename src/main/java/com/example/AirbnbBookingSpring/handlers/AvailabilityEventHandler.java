@@ -2,7 +2,6 @@ package com.example.AirbnbBookingSpring.handlers;
 
 import com.example.AirbnbBookingSpring.repositories.writes.AvailabilityWriteRepository;
 import com.example.AirbnbBookingSpring.saga.SagaEvent;
-import com.example.AirbnbBookingSpring.saga.SagaEventProcessor;
 import com.example.AirbnbBookingSpring.saga.SagaEventPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,7 +15,6 @@ public class AvailabilityEventHandler {
 
     private final AvailabilityWriteRepository availabilityWriteRepository;
     private final SagaEventPublisher sagaEventPublisher;
-    private final SagaEventProcessor sagaEventProcessor;
 
     public void handleBookingConfirmed(SagaEvent sagaEvent){
         try{
