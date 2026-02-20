@@ -19,7 +19,6 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -105,27 +104,26 @@ public class BookingService implements IBookingService {
                 updateBookingRequest.getIdempotencyKey()
                 )
                 .orElseThrow(()-> new RuntimeException("Booking not found"));
+
+
         log.info("booking found for idempotency key {}",updateBookingRequest.getIdempotencyKey());
         log.info("booking status {}:",booking.getStatus());
         if(booking.getStatus() != BookingStatus.PENDING) {
             throw new RuntimeException("Booking status is not PENDING");
         }
 
+        Map<String, Object> payload = Map.of(
+                "bookingId",   booking.getId(),
+                "airbnbId",    booking.getAirbnb().getId(),   // safe: fully hydrated from DB
+                "checkInDate", booking.getCheckInDate().toString(),
+                "checkOutDate", booking.getCheckOutDate().toString()
+        );
+
         if(updateBookingRequest.getBookingStatus()==BookingStatus.CONFIRMED){ // TODO : This also violates a solid principle please resolve it.
-            sagaEventPublisher.publishEvent("BOOKING_CONFIRM_REQUESTED","CONFIRM_BOOKING",
-                    Map.of("bookingId", booking.getId(),
-                            "airbnbId",booking.getAirbnb().getId(),
-                            "checkInDate",booking.getCheckInDate().toString(),
-                            "checkOutDate",booking.getCheckOutDate().toString()
-                            ));
+            sagaEventPublisher.publishEvent("BOOKING_CONFIRM_REQUESTED","CONFIRM_BOOKING",payload);
         }
         else if(updateBookingRequest.getBookingStatus()==BookingStatus.CANCELLED) {
-            sagaEventPublisher.publishEvent("BOOKING_CANCEL_REQUESTED","CANCEL_BOOKING",
-                    Map.of("bookingId", booking.getId(),
-                            "airbnbId",booking.getAirbnb().getId(),
-                            "checkInDate",booking.getCheckInDate().toString(),
-                            "checkOutDate",booking.getCheckOutDate().toString()
-                    ));
+            sagaEventPublisher.publishEvent("BOOKING_CANCEL_REQUESTED","CANCEL_BOOKING",payload);
         }
 
         return booking;

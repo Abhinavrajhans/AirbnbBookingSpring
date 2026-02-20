@@ -4,6 +4,7 @@ import com.example.AirbnbBookingSpring.repositories.writes.AvailabilityWriteRepo
 import com.example.AirbnbBookingSpring.saga.SagaEvent;
 import com.example.AirbnbBookingSpring.saga.SagaEventPublisher;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -11,6 +12,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AvailabilityEventHandler {
 
     private final AvailabilityWriteRepository availabilityWriteRepository;
@@ -30,7 +32,7 @@ public class AvailabilityEventHandler {
                 throw new RuntimeException("Airbnb is not available for the given dates. Please try again with different dates");
             }
             availabilityWriteRepository.updateBookingIdByAirbnbIdAndDateBetween(bookingId,airbnbId,checkInDate,checkOutDate);
-            sagaEventPublisher.publishEvent("BOOKING_CONFIRMED","CONFIRM_BOOKING",payload);
+
         }
         catch (Exception e){
             Map<String,Object> payload = sagaEvent.getPayload();
@@ -46,10 +48,11 @@ public class AvailabilityEventHandler {
             Long airbnbId =Long.valueOf(payload.get("airbnbId").toString());
             LocalDate checkInDate=LocalDate.parse(payload.get("checkInDate").toString());
             LocalDate checkOutDate=LocalDate.parse(payload.get("checkOutDate").toString());
-            availabilityWriteRepository.updateBookingIdByAirbnbIdAndDateBetween(null,airbnbId,checkInDate,checkOutDate);
-            sagaEventPublisher.publishEvent("BOOKING_CANCELLED","CANCEL_BOOKING",payload);
+            availabilityWriteRepository.clearBookingByAirbnbIdAndDateBetween(airbnbId, checkInDate, checkOutDate);
+
         }
         catch (Exception e){
+            log.error("handleBookingCancelled failed for sagaId={}: {}", sagaEvent.getSagaId(), e.getMessage());
             Map<String,Object> payload = sagaEvent.getPayload();
             sagaEventPublisher.publishEvent("BOOKING_COMPENSATED","COMPENSATE_BOOKING",payload);
             throw new RuntimeException("failed to cancel booking",e);
